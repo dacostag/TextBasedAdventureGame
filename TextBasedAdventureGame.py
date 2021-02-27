@@ -8,7 +8,7 @@ def print_mainmenu():
 
 while True:
     print_mainmenu()
-    selection = input()
+    selection = input().casefold()
     if selection == "1" or selection == "start":
         print("Starting a new game...")
     elif selection == "2" or selection == "load":
