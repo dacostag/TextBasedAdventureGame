@@ -6,7 +6,6 @@ def print_mainmenu():
     "3- Press key '3' or type 'quit' to quit the game",
     sep="\n")
 
-
 while True:
     print_mainmenu()
     selection = input()
