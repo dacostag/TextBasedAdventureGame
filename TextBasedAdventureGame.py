@@ -4,6 +4,7 @@ class Game:
         self.database = {}
         self.story = []
         self.choices = []
+        self.outcomes = []
         with open("story/story.txt") as f:
             text = ""
             for line in f:
@@ -14,7 +15,15 @@ class Game:
                     text = ""
         with open("story/choices.txt") as f:
             self.choices.extend(f.readlines())
-        
+        with open("story/outcomes.txt") as f:
+            text = ""
+            for line in f:
+                if line != "*\n":
+                    text += line
+                    print(line)
+                else:
+                    self.outcomes.append(text)
+                    text = ""
     
     def main(self):
         if self.mode == "menu":
@@ -62,6 +71,7 @@ class Game:
                                    'weapon': input("2- A weapon for the journey ").capitalize(),
                                    'tool': input("3- A traversal tool ").capitalize(),
                                    'key': False,
+                                   'lives': 3,
                                    'level': 0, 'chapter': 0} 
         while True:
             difficulty = input("Choose your difficulty:\n1- Easy\n2- Medium\n3- Hard\n").casefold()
@@ -91,12 +101,27 @@ class Game:
         print()
         self.outcome(username)
 
-    # def outcome(self, username):
-    #     while True:
-    #         selection = input()
-    #         if selection == "/i":
-    #             print(f"Inventory: {self.database[username]['snack']}, {self.database[username]['weapon']}, {self.database[username]['tool']}")
-    #             continue
+    def outcome(self, username):
+        while True:
+            selection = input()
+            if selection == "/i":
+                print(f"Inventory: {self.database[username]['snack']}, {self.database[username]['weapon']}, {self.database[username]['tool']}")
+                continue
+            elif selection == "/c":
+                print(f"Your character: {self.database[username]['name']}, {self.database[username]['species']}, {self.database[username]['gender']}.")
+                print(f"Lives remaining: {self.database[username]['lives']}")
+                continue
+            elif selection == "/h":
+                print("Type the number of the option you want to choose.",
+                      "Commands you can use:",
+                      "/i => Shows inventory.",
+                      "/q => Exits the game.",
+                      "/c => Shows the character traits.",
+                      "/h => Shows help.", sep="\n")
+                continue
+            # elif selection == '1':
+
+                
 
 
 
