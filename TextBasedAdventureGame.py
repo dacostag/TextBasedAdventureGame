@@ -18,7 +18,7 @@ class Game:
             text = f.read().split(sep="*")
             self.outcomes[0] = {1: text[0:3], 2: text[3:7], 3: text[7:10]}
             self.outcomes[1] = {1: text[10:13], 2: text[13:16], 3: text[16:20]}
-    
+
     def main(self):
         if self.mode == "menu":
             self.main_menu()
@@ -48,25 +48,27 @@ class Game:
                 raise SystemExit()
             else:
                 print("Unknown input! Please enter a valid one.")
-                  
+
     def print_main_menu(self):
         print("***Welcome to the Journey to Mount Qaf***",
-        "",
-        "1- Press key '1' or type 'start' to start a new game",
-        "2- Press key '2' or type 'load' to load your progress",
-        "3- Press key '3' or type 'quit' to quit the game",
-        sep="\n")
+              "",
+              "1- Press key '1' or type 'start' to start a new game",
+              "2- Press key '2' or type 'load' to load your progress",
+              "3- Press key '3' or type 'quit' to quit the game",
+              sep="\n")
 
     def create_new_user(self, username):
-        self.database[username] = {'name': input("1- Name ").capitalize(), 
+        print("Create your character:")
+        self.database[username] = {'name': input("1- Name ").capitalize(),
                                    'species': input("2- Species ").capitalize(),
-                                   'gender': input("3- Gender ").capitalize(),
-                                   'snack': input("1- Favourite Snack ").capitalize(),
-                                   'weapon': input("2- A weapon for the journey ").capitalize(),
-                                   'tool': input("3- A traversal tool ").capitalize(),
-                                   'key': False,
-                                   'lives': 3,
-                                   'level': 0, 'chapter': 0} 
+                                   'gender': input("3- Gender ").capitalize()}
+        print("Pack your bag for the journey:")
+        self.database[username].update({'snack': input("1- Favourite Snack ").capitalize(),
+                                        'weapon': input("2- A weapon for the journey ").capitalize(),
+                                        'tool': input("3- A traversal tool ").capitalize(),
+                                        'key': False,
+                                        'lives': 5,
+                                        'level': 0, 'chapter': 0})
         while True:
             difficulty = input("Choose your difficulty:\n1- Easy\n2- Medium\n3- Hard\n").casefold()
             if difficulty == '1' or difficulty == 'easy':
@@ -78,11 +80,11 @@ class Game:
             elif difficulty == '3' or difficulty == 'hard':
                 self.database[username]['difficulty'] = 'Hard'
                 break
-            print("Invalid input.")
+            print("Unknown input! Please enter a valid one.")
 
     def play(self, username):
         while True:
-            if not self.database[username]['chapter']: # Prints the level title if at chapter 0.
+            if not self.database[username]['chapter']:  # Prints the level title if at chapter 0.
                 print(self.story[self.database[username]['level'] * 4])
                 self.database[username]['chapter'] += 1
             print(self.story[self.database[username]['level'] * 4 + self.database[username]['chapter']])
@@ -103,8 +105,9 @@ class Game:
                 print(f"Inventory: {self.database[username]['snack']}, {self.database[username]['weapon']}, {self.database[username]['tool']}")
                 continue
             elif selection == "/q":
-                print("Goodbye!")
-                raise SystemExit()
+                if input("You sure you want to quit the game? Y/N").upper() == "Y":
+                    print("Goodbye!")
+                    raise SystemExit()
             elif selection == "/c":
                 print(f"Your character: {self.database[username]['name']}, {self.database[username]['species']}, {self.database[username]['gender']}.")
                 print(f"Lives remaining: {self.database[username]['lives']}")
@@ -127,9 +130,9 @@ class Game:
     def execute_event(self, username, choice):
         if self.database[username]['level'] == 0 and self.database[username]['chapter'] == 2:
             event_text = self.outcomes[0][2][0] if self.database[username]['key'] and choice == 1 else self.outcomes[0][2][choice]
-        else:   
+        else:
             event_text = self.outcomes[self.database[username]['level']][self.database[username]['chapter']][choice-1].replace("{tool}", self.database[username]['tool'])
-        
+
         print(event_text[:event_text.index(" (")])
         print()
         action_text = event_text[event_text.index("("):event_text.index(")")]
@@ -149,15 +152,20 @@ class Game:
             self.database[username]['chapter'] = 0
             print("You died! Lives remaining:", self.database[username]['lives'])
             print()
-        
+
         if "move" in action_text:
             self.advance_chapter(username)
-        
+
     def advance_chapter(self, username):
         self.database[username]['chapter'] += 1
         if self.database[username]['chapter'] > 3:
             self.database[username]['chapter'] = 0
             self.database[username]['level'] += 1
-       
+        if self.database[username]['level'] == 1: # To be removed.
+            print("Level 2")
+            print()
+            print("Goodbye!")
+            quit()
+
 game = Game()
 game.main()
