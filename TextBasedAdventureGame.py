@@ -81,11 +81,12 @@ class Game:
             print("Invalid input.")
 
     def play(self, username):
-        if not self.database[username]['chapter']: # Prints the level title if at chapter 0.
-            print(self.story[self.database[username]['level'] * 4])
-            self.database[username]['chapter'] += 1
-        print(self.story[self.database[username]['level'] * 4 + self.database[username]['chapter']])
-        self.make_choice(username)
+        while True:
+            if not self.database[username]['chapter']: # Prints the level title if at chapter 0.
+                print(self.story[self.database[username]['level'] * 4])
+                self.database[username]['chapter'] += 1
+            print(self.story[self.database[username]['level'] * 4 + self.database[username]['chapter']])
+            self.make_choice(username)
 
     def make_choice(self, username):
         print("What will you do? Type the number of the option or type '/h' to show help.")
@@ -118,17 +119,45 @@ class Game:
                 continue
             elif selection in ('1', '2', '3'):
                 self.execute_event(username, int(selection))
+                break
             else:
                 print("Unknown input! Please enter a valid one.")
                 continue
 
-    # def execute_event(self, username, choice):
-    #     event_text = self.outcomes[self.database[username]['level'] * 9 + (self.database[username]['chapter'] - 1) * 3 + (choice-1)].replace("{tool}", self.database[username]['tool'])
-    #     action_text = event_text[event_text.index("("):event_text.index(")")]
-    #     print(event_text[:event_text.index(" (")])
-    #     if "inventory+'key'" in action_text:
-    #         self.database[username]['key'] = True
+    def execute_event(self, username, choice):
+        if self.database[username]['level'] == 0 and self.database[username]['chapter'] == 2:
+            event_text = self.outcomes[0][2][0] if self.database[username]['key'] and choice == 1 else self.outcomes[0][2][choice]
+        else:   
+            event_text = self.outcomes[self.database[username]['level']][self.database[username]['chapter']][choice-1].replace("{tool}", self.database[username]['tool'])
         
+        print(event_text[:event_text.index(" (")])
+        print()
+        action_text = event_text[event_text.index("("):event_text.index(")")]
+
+        if "inventory+'key'" in action_text:
+            self.database[username]['key'] = True
+        if "inventory-'key'" in action_text:
+            self.database[username]['key'] = False
+
+        if "life+1" in action_text: # "life+1" also works as a "move".
+            self.database[username]['lives'] += 1
+            print("You gained an extra life! Lives remaining:", self.database[username]['lives'])
+            self.advance_chapter(username)
+
+        if "life-1" in action_text: # Do something when lives = 0 ?
+            self.database[username]['lives'] -= 1
+            self.database[username]['chapter'] = 0
+            print("You died! Lives remaining:", self.database[username]['lives'])
+            print()
+        
+        if "move" in action_text:
+            self.advance_chapter(username)
+        
+    def advance_chapter(self, username):
+        self.database[username]['chapter'] += 1
+        if self.database[username]['chapter'] > 3:
+            self.database[username]['chapter'] = 0
+            self.database[username]['level'] += 1
        
 game = Game()
 game.main()
