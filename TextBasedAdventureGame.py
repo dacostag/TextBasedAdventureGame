@@ -3,8 +3,7 @@ class Game:
         self.mode = "menu"
         self.database = {}
         self.story = []
-        self.choices = []
-        self.outcomes = []
+        self.outcomes = {}
         with open("story/story.txt") as f:
             text = ""
             for line in f:
@@ -14,16 +13,11 @@ class Game:
                     self.story.append(text)
                     text = ""
         with open("story/choices.txt") as f:
-            self.choices.extend(f.readlines())
+            self.choices = f.readlines()
         with open("story/outcomes.txt") as f:
-            text = ""
-            for line in f:
-                if line != "*\n":
-                    text += line
-                    print(line)
-                else:
-                    self.outcomes.append(text)
-                    text = ""
+            text = f.read().split(sep="*")
+            self.outcomes[0] = {1: text[0:3], 2: text[3:7], 3: text[7:10]}
+            self.outcomes[1] = {1: text[10:13], 2: text[13:16], 3: text[16:20]}
     
     def main(self):
         if self.mode == "menu":
@@ -97,16 +91,19 @@ class Game:
         print("What will you do? Type the number of the option or type '/h' to show help.")
         print()
         for i in range(3):
-            print(f"{i}- {self.choices[self.database[username]['level'] * 9 + (self.database[username]['chapter'] - 1) * 3 + i]}", end="")
+            print(f"{i+1}- {self.choices[self.database[username]['level'] * 9 + (self.database[username]['chapter'] - 1) * 3 + i]}", end="")
         print()
-        self.outcome(username)
+        self.choice_outcome(username)
 
-    def outcome(self, username):
+    def choice_outcome(self, username):
         while True:
             selection = input()
             if selection == "/i":
                 print(f"Inventory: {self.database[username]['snack']}, {self.database[username]['weapon']}, {self.database[username]['tool']}")
                 continue
+            elif selection == "/q":
+                print("Goodbye!")
+                raise SystemExit()
             elif selection == "/c":
                 print(f"Your character: {self.database[username]['name']}, {self.database[username]['species']}, {self.database[username]['gender']}.")
                 print(f"Lives remaining: {self.database[username]['lives']}")
@@ -119,16 +116,19 @@ class Game:
                       "/c => Shows the character traits.",
                       "/h => Shows help.", sep="\n")
                 continue
-            # elif selection == '1':
+            elif selection in ('1', '2', '3'):
+                self.execute_event(username, int(selection))
+            else:
+                print("Unknown input! Please enter a valid one.")
+                continue
 
-                
-
-
-
-
+    # def execute_event(self, username, choice):
+    #     event_text = self.outcomes[self.database[username]['level'] * 9 + (self.database[username]['chapter'] - 1) * 3 + (choice-1)].replace("{tool}", self.database[username]['tool'])
+    #     action_text = event_text[event_text.index("("):event_text.index(")")]
+    #     print(event_text[:event_text.index(" (")])
+    #     if "inventory+'key'" in action_text:
+    #         self.database[username]['key'] = True
         
-
-
-
+       
 game = Game()
 game.main()
