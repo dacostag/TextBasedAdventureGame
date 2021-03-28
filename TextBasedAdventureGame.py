@@ -40,9 +40,14 @@ class Game:
                     print(f"Your inventory: {self.database[username]['snack']}, {self.database[username]['weapon']}, {self.database[username]['tool']}")
                     print(f"Difficulty: {self.database[username]['difficulty']}")
                     print()
+                    self.save_game(username)
                     self.play(username)
             elif selection == "2" or selection == "load":
-                print("No save data found!")
+                try:
+                    save_file = open(f"saves/{input()}.txt")
+                    save_file.close()
+                except OSError:
+                    print("No save data found!")
             elif selection == "3" or selection == "quit":
                 print("Goodbye!")
                 raise SystemExit()
@@ -57,7 +62,7 @@ class Game:
               "3- Press key '3' or type 'quit' to quit the game",
               sep="\n")
 
-    def create_new_user(self, username):
+    def create_new_user(self, username):  # This would probably work better as a Player() class.
         print("Create your character:")
         self.database[username] = {'name': input("1- Name ").capitalize(),
                                    'species': input("2- Species ").capitalize(),
@@ -147,7 +152,7 @@ class Game:
             print("You gained an extra life! Lives remaining:", self.database[username]['lives'])
             self.advance_chapter(username)
 
-        if "life-1" in action_text: # Do something when lives = 0 ?
+        if "life-1" in action_text: # Do something when lives == 0 ?
             self.database[username]['lives'] -= 1
             self.database[username]['chapter'] = 0
             print("You died! Lives remaining:", self.database[username]['lives'])
@@ -156,16 +161,28 @@ class Game:
         if "move" in action_text:
             self.advance_chapter(username)
 
-    def advance_chapter(self, username):
-        self.database[username]['chapter'] += 1
-        if self.database[username]['chapter'] > 3:
-            self.database[username]['chapter'] = 0
-            self.database[username]['level'] += 1
+        if "save" in action_text:
+            self.save_game(username)
+
         if self.database[username]['level'] == 1: # To be removed.
             print("Level 2")
             print()
             print("Goodbye!")
             quit()
+
+    def advance_chapter(self, username):
+        self.database[username]['chapter'] += 1
+        if self.database[username]['chapter'] > 3:
+            self.database[username]['chapter'] = 0
+            self.database[username]['level'] += 1
+
+    def save_game(self, username):
+        save_file = open(f"saves/{username}.txt", "w")
+        save_file.write(f"{self.database[username]['name']}, {self.database[username]['species']}, {self.database[username]['gender']}\n"
+                        + f"{self.database[username]['snack']}, {self.database[username]['weapon']}, {self.database[username]['tool']}\n"
+                        + f"{self.database[username]['difficulty']} {self.database[username]['lives']}\n"
+                        + f"{self.database[username]['level']}")
+
 
 game = Game()
 game.main()
