@@ -1,3 +1,5 @@
+import os
+
 class Game:
     def __init__(self):
         self.mode = "menu"
@@ -27,7 +29,7 @@ class Game:
         while True:
             self.print_main_menu()
             selection = input().casefold()
-            if selection == "1" or selection == "start":
+            if selection in ("1", "start"):
                 print("Starting a new game...")
                 username = input("Enter a user name to save your progress or type '/b' to go back ")
                 if username == '/b':
@@ -42,13 +44,25 @@ class Game:
                     print()
                     self.save_game(username)
                     self.play(username)
-            elif selection == "2" or selection == "load":
-                try:
-                    save_file = open(f"saves/{input()}.txt")
-                    save_file.close()
-                except OSError:
+            elif selection in ("2", "load"):
+                available_usernames = []
+                with os.scandir("saves/") as save_files:
+                    for f in save_files:
+                        if f.name.endswith(".txt"):
+                            available_usernames.append(os.path.splitext(os.path.split(f.name)[1])[0])
+                if available_usernames:
+                    while True:
+                        print("Type your user name from the list:")
+                        print(*available_usernames, sep="\n")
+                        username = input()
+                        if username in available_usernames:
+                            self.load_game(username)
+                            self.play(username)
+                            break
+                        print("Invalid choice!")
+                else:
                     print("No save data found!")
-            elif selection == "3" or selection == "quit":
+            elif selection in ("3", "quit"):
                 print("Goodbye!")
                 raise SystemExit()
             else:
@@ -94,14 +108,14 @@ class Game:
                 self.database[username]['chapter'] += 1
             print(self.story[self.database[username]['level'] * 4 + self.database[username]['chapter']])
             self.make_choice(username)
+            self.choice_outcome(username)
 
     def make_choice(self, username):
         print("What will you do? Type the number of the option or type '/h' to show help.")
         print()
         for i in range(3):
-            print(f"{i+1}- {self.choices[self.database[username]['level'] * 9 + (self.database[username]['chapter'] - 1) * 3 + i]}", end="")
+            print(f"{i+1}- {self.choices[self.database[username]['level'] * 9 + (self.database[username]['chapter'] - 1) * 3 + i]}".replace("{weapon}", self.database[username]['weapon']), end="")
         print()
-        self.choice_outcome(username)
 
     def choice_outcome(self, username):
         while True:
@@ -136,7 +150,8 @@ class Game:
         if self.database[username]['level'] == 0 and self.database[username]['chapter'] == 2:
             event_text = self.outcomes[0][2][0] if self.database[username]['key'] and choice == 1 else self.outcomes[0][2][choice]
         else:
-            event_text = self.outcomes[self.database[username]['level']][self.database[username]['chapter']][choice-1].replace("{tool}", self.database[username]['tool'])
+            event_text = self.outcomes[self.database[username]['level']][self.database[username]['chapter']][choice-1]
+            event_text = event_text.replace("{tool}", self.database[username]['tool'])
 
         print(event_text[:event_text.index(" (")])
         print()
@@ -164,12 +179,6 @@ class Game:
         if "save" in action_text:
             self.save_game(username)
 
-        if self.database[username]['level'] == 1: # To be removed.
-            print("Level 2")
-            print()
-            print("Goodbye!")
-            quit()
-
     def advance_chapter(self, username):
         self.database[username]['chapter'] += 1
         if self.database[username]['chapter'] > 3:
@@ -178,10 +187,28 @@ class Game:
 
     def save_game(self, username):
         save_file = open(f"saves/{username}.txt", "w")
+        key = "Key" if self.database[username]['key'] else ""
         save_file.write(f"{self.database[username]['name']}, {self.database[username]['species']}, {self.database[username]['gender']}\n"
-                        + f"{self.database[username]['snack']}, {self.database[username]['weapon']}, {self.database[username]['tool']}\n"
+                        + f"{self.database[username]['snack']}, {self.database[username]['weapon']}, {self.database[username]['tool']}, {key}\n"
                         + f"{self.database[username]['difficulty']} {self.database[username]['lives']}\n"
-                        + f"{self.database[username]['level']}")
+                        + f"{self.database[username]['level'] + 1}")
+
+    def load_game(self, username):
+        save_file = open(f"{username}.txt", "r")
+        character_data = save_file.readline().rstrip().split(sep=", ")
+        self.database[username] = {'name': character_data[0],
+                                   'species': character_data[1],
+                                   'gender': character_data[2]}
+        inventory_data = save_file.readline().rstrip().split(sep=", ")
+        self.database[username].update({'snack': inventory_data[0],
+                                        'weapon': inventory_data[1],
+                                        'tool': inventory_data[2]})
+        self.database[username]['key'] = "Key" in inventory_data
+        difficulty_and_lives = save_file.readline().rstrip().split()
+        self.database[username]['difficulty'] = difficulty_and_lives[0]
+        self.database[username]['lives'] = int(difficulty_and_lives[1])
+        self.database[username]['level'] = int(save_file.readline().rstrip())
+        self.database[username]['chapter'] = 0
 
 
 game = Game()
